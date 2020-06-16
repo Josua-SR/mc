@@ -224,28 +224,28 @@ func (f *fsClient) Watch(options WatchOptions) (*WatchObject, *probe.Error) {
 
 func preserveAttributes(fd *os.File, attr map[string]string) *probe.Error {
 	mode, e := strconv.ParseUint(attr["mode"], 10, 32)
-	if e != nil {
-		return probe.NewError(e)
-	}
-
-	// Attempt to change the file mode.
-	if e := fd.Chmod(os.FileMode(mode)); e != nil {
-		return probe.NewError(e)
+	if e == nil {
+		// Attempt to change the file mode.
+		if e := fd.Chmod(os.FileMode(mode)); e != nil {
+			return probe.NewError(e)
+		}
 	}
 
 	uid, e := strconv.Atoi(attr["uid"])
 	if e != nil {
-		return probe.NewError(e)
+		uid = -1
 	}
 
 	gid, e := strconv.Atoi(attr["gid"])
 	if e != nil {
-		return probe.NewError(e)
+		gid = -1
 	}
 
-	// Attempt to change the owner.
-	if e := fd.Chown(uid, gid); e != nil {
-		return probe.NewError(e)
+	if uid != -1 || gid != -1 {
+		// Attempt to change the owner.
+		if e := fd.Chown(uid, gid); e != nil {
+			return probe.NewError(e)
+		}
 	}
 
 	return nil
